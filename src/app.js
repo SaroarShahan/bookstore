@@ -1,25 +1,47 @@
 const express = require('express');
 
-const bookRoutes = require('./routes/bookRoutes');
+const { RouteBinder } = require('./routes');
 
-function createApp() {
-  const app = express();
+const apiBaseUri = '/api/v1';
 
-  app.use(express.json());
+class App {
+  initRoutes(app) {
+    app.use(apiBaseUri, RouteBinder.bindRoutes());
+  }
 
-  // Routes
-  app.use('/api/v1/books', bookRoutes);
+  initMiddleware(app) {
+    app.use(express.json());
+  }
 
-
-  app.get('/health', (req, res) => {
-    res.json({
-      uptime: process.uptime(),
-      message: 'OK',
-      timestamp: Date.now(),
+  initHealthCheck(app) {
+    app.get('/health', (req, res) => {
+      res.json({
+        uptime: process.uptime(),
+        message: 'OK',
+        timestamp: Date.now(),
+      });
     });
-  });
+  }
 
-  return app;
+  initGlobalVariable() {
+    global.isProduction = process.env.NODE_ENV;
+  }
+
+  init() {
+    const app = express();
+
+    this.initMiddleware(app);
+    this.initGlobalVariable();
+    this.initRoutes(app);
+    this.initHealthCheck(app);
+    app.disable('x-powered-by');
+
+    return app;
+  }
 }
 
-module.exports = { createApp };
+function createApp() {
+  return new App().init();
+}
+
+module.exports = { App, createApp };

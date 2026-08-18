@@ -1,20 +1,71 @@
-require('dotenv').config();
-const { createApp } = require('./app');
+const dotenv = require('dotenv');
+const http = require('http');
+
+const { App } = require('./app');
 const sequelize = require('./config/db');
 
-async function bootstrap() {
-  await sequelize.authenticate();
-  console.log('✅ DB connected');
+dotenv.config();
 
-  const app = createApp();
-  const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4000;
+const HOST = process.env.HOST || 'localhost';
 
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+const application = new App().init();
+const server = http.createServer(application);
+
+const listen = () => {
+  server.listen(PORT, () => {
+    console.info({
+      message: 'Bookstore API is running',
+      context: listen.name,
+      data: {
+        ip: HOST,
+        port: PORT,
+        processId: process.pid,
+      },
+    });
   });
-}
+};
 
-bootstrap().catch((err) => {
-  console.error('❌ Failed to start:', err);
-  process.exit(1);
-});
+const stopServer = () => {
+  console.info({
+    message: 'Stopping server',
+    context: stopServer.name,
+  });
+
+  server.close(() => {
+    console.info({
+      message: 'Bookstore API is stopped',
+      context: stopServer.name,
+      data: {
+        ip: HOST,
+        port: PORT,
+      },
+    });
+  });
+};
+
+const startServer = () => {
+  console.info({
+    message: 'Starting DB server',
+    context: startServer.name,
+  });
+
+  sequelize
+    .authenticate()
+    .then(() => {
+      console.info({
+        message: 'Database connected',
+        context: startServer.name,
+      });
+      listen();
+    })
+    .catch((error) => {
+      console.error({
+        error,
+        context: startServer.name,
+      });
+      process.exit(1);
+    });
+};
+
+module.exports = { startServer, stopServer };
