@@ -1,22 +1,24 @@
-# Node Boilerplate
+# Bookstore API
 
-A minimal Node.js API boilerplate using Express, Sequelize, and environment-based database
-configuration.
+A Node.js Bookstore API built with Express, Sequelize, PostgreSQL, and a layered
+controller/service/repository structure.
 
 ## Features
 
-- Express app setup
-- JSON request parsing
-- Health check endpoint
-- Sequelize configuration
-- Sequelize CLI migration/model scripts
+- Express application class with route, middleware, health check, and global setup
+- `src/Index.js` process entrypoint with process-level error handlers
+- `src/server.js` server lifecycle helpers for start and stop
+- Book routes mounted under `/api/v1/books`
+- Book controller, service, and repository layers
+- Sequelize models for users and books
+- Sequelize migrations for `users` and `books`
 - Environment variable support with `dotenv`
 
 ## Requirements
 
 - Node.js
 - npm
-- A SQL database supported by Sequelize
+- PostgreSQL
 
 ## Getting Started
 
@@ -32,16 +34,25 @@ Create your environment file:
 cp .env.example .env
 ```
 
-Update `.env` with your local database credentials:
+Update `.env` with your local values:
 
 ```env
-DB_NAME=node_boilerplate
-DB_USER=
+DB_NAME=bookstore
+DB_USER=postgres
 DB_PASSWORD=
-DB_HOST=
+DB_HOST=localhost
 DB_DIALECT=postgres
 DB_PORT=5432
-PORT=8080
+DB_LOGGING=false
+HOST=localhost
+PORT=4000
+IS_LOCAL=true
+```
+
+Run migrations:
+
+```bash
+npm run migrate
 ```
 
 Start the development server:
@@ -50,59 +61,102 @@ Start the development server:
 npm run dev
 ```
 
-Start the production server:
+Start the server with Node:
 
 ```bash
 npm start
 ```
 
-By default, the server uses `PORT` from `.env`, or falls back to `4000`.
+The server uses `PORT` from `.env`, or falls back to `4000`.
 
-## Health Check
+## API Endpoints
 
-Once the server is running, check:
+Health check:
 
 ```http
 GET /health
 ```
 
-Example response:
+Book routes:
+
+```http
+GET    /api/v1/books
+POST   /api/v1/books
+GET    /api/v1/books/:id
+PATCH  /api/v1/books/:id
+DELETE /api/v1/books/:id
+```
+
+Create book request body:
 
 ```json
 {
-  "uptime": 12.34,
-  "message": "OK",
-  "timestamp": 1760000000000
+  "slug": "clean-code",
+  "title": "Clean Code",
+  "description": "A handbook of agile software craftsmanship",
+  "authorId": 1
 }
 ```
 
-## Database
+List books supports pagination:
 
-Database settings are loaded from `.env` in:
-
-- `src/config/db.js`
-- `src/config/config.js`
-
-The project currently includes the `pg` and `pg-hstore` packages for PostgreSQL. If you use
-`DB_DIALECT=mysql`, install the MySQL driver too:
-
-```bash
-npm install mysql2
+```http
+GET /api/v1/books?page=1&limit=20
 ```
 
-For PostgreSQL, set:
+## Project Structure
 
-```env
-DB_DIALECT=postgres
-DB_PORT=5432
+```text
+.
+├── migrations/
+│   ├── 20260817174500-create-users.js
+│   └── 20260817184631-create-books.js
+├── src/
+│   ├── Index.js
+│   ├── app.js
+│   ├── server.js
+│   ├── config/
+│   │   ├── config.js
+│   │   └── db.js
+│   ├── controllers/
+│   │   ├── BookController.js
+│   │   └── UserController.js
+│   ├── models/
+│   │   ├── BookModel.js
+│   │   ├── UserModel.js
+│   │   └── index.js
+│   ├── repository/
+│   │   └── BookRepository.js
+│   ├── routes/
+│   │   ├── BookRoutes.js
+│   │   └── index.js
+│   ├── services/
+│   │   └── BookServices.js
+│   └── utils/
+│       └── index.js
+├── package.json
+└── README.md
 ```
 
-For MySQL, set:
+## Application Flow
 
-```env
-DB_DIALECT=mysql
-DB_PORT=3306
+The API starts from `src/Index.js`.
+
+```text
+Index.js
+└── server.js
+    └── app.js
+        └── routes/index.js
+            └── routes/BookRoutes.js
+                └── controllers/BookController.js
+                    └── services/BookServices.js
+                        └── repository/BookRepository.js
+                            └── models/BookModel.js
 ```
+
+`BookController` handles request/response and error forwarding. `BookServices`
+handles business logic and response shaping. `BookRepository` handles Sequelize
+model operations.
 
 ## Sequelize Commands
 
@@ -127,35 +181,32 @@ npm run migrate:undo:all
 Generate a migration:
 
 ```bash
-npm run migration:gen -- create-users
+npm run migration:gen -- create-table-name
 ```
 
 Generate a model:
 
 ```bash
-npm run model:gen -- User --attributes name:string,email:string
+npm run model:gen -- Book --attributes title:string
 ```
 
-## Project Structure
+## Database
 
-```text
-.
-├── .vscode/
-├── migrations/
-├── src/
-│   ├── app.js
-│   ├── config/
-│   │   ├── config.js
-│   │   └── db.js
-│   ├── models/
-│   │   └── index.js
-│   ├── routes/
-│   │   └── index.js
-│   └── server.js
-├── .env.example
-├── .sequelizerc
-├── package.json
-└── README.md
+Database connection settings are loaded from `.env` in:
+
+- `src/config/db.js`
+- `src/config/config.js`
+
+This project includes `pg` and `pg-hstore` for PostgreSQL.
+
+## Scripts
+
+```bash
+npm run dev
+npm start
+npm run migrate
+npm run migrate:undo
+npm run migrate:undo:all
 ```
 
 ## License
