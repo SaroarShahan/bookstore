@@ -1,13 +1,13 @@
 {
   "name": "node-boilerplate",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "main": "src/Index.js",
   "repository": "git@github.com:SaroarShahan/node-boilerplate.git",
   "author": "SaroarShahan",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "dev": "nodemon src/Index.js",
+    "start": "node src/Index.js",
     "migrate": "sequelize-cli db:migrate",
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "migrate:undo:all": "sequelize-cli db:migrate:undo:all",
