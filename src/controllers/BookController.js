@@ -1,89 +1,98 @@
-const books = [
-    { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald' },
-    { id: 2, title: 'To Kill a Mockingbird', author: 'Harper Lee' },
-    { id: 3, title: '1984', author: 'George Orwell' }
-]
+const { BookServices } = require('../services/BookServices');
 
-exports.getBooks = (req, res) => {
-    res.json({
+const bookServices = new BookServices();
+
+class BookController {
+  async getBooks(req, res, next) {
+    try {
+      const data = await bookServices.getBooks(req.query);
+
+      res.json({
         success: true,
         message: 'Books retrieved successfully',
-        data: books
-    })
-}
-
-exports.getBookById = (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const book = books.find(b => b.id === bookId);
-
-    if (!book) {
-        return res.status(404).json({
-            success: false,
-            message: 'Book not found'
-        });
+        data,
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 
-    res.json({
+  async getBookById(req, res, next) {
+    try {
+      const book = await bookServices.getBookById(req.params.id);
+
+      if (!book) {
+        return res.status(404).json({
+          success: false,
+          message: 'Book not found',
+        });
+      }
+
+      res.json({
         success: true,
         message: 'Book retrieved successfully',
-        data: book
-    });
-}
+        data: book,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
-exports.createBook = (req, res) => {
-    const { title, author } = req.body;
+  async createBook(req, res, next) {
+    try {
+      const newBook = await bookServices.createBook(req.body);
 
-    const newBook = {
-        id: books.length + 1,
-        title,
-        author
-    };
-
-    books.push(newBook);
-    res.status(201).json({
+      res.status(201).json({
         success: true,
         message: 'Book created successfully',
-        data: newBook
-    });
-}
-
-exports.updateBook = (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const { title, author } = req.body;
-    const bookIndex = books.findIndex(b => b.id === bookId);
-
-    if (bookIndex === -1) {
-        return res.status(404).json({
-            success: false,
-            message: 'Book not found'
-        });
+        data: newBook,
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 
-    books[bookIndex] = { id: bookId, title, author };
+  async updateBook(req, res, next) {
+    try {
+      const book = await bookServices.updateBook(req.params.id, req.body);
 
-    res.json({
+      if (!book) {
+        return res.status(404).json({
+          success: false,
+          message: 'Book not found',
+        });
+      }
+
+      res.json({
         success: true,
         message: 'Book updated successfully',
-        data: books[bookIndex]
-    });
-}
-
-exports.deleteBook = (req, res) => {
-    const bookId = parseInt(req.params.id);
-    const bookIndex = books.findIndex(b => b.id === bookId);
-
-    if (bookIndex === -1) {
-        return res.status(404).json({
-            success: false,
-            message: 'Book not found'
-        });
+        data: book,
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 
-    const deletedBook = books.splice(bookIndex, 1);
+  async deleteBook(req, res, next) {
+    try {
+      const book = await bookServices.deleteBook(req.params.id);
 
-    res.json({
+      if (!book) {
+        return res.status(404).json({
+          success: false,
+          message: 'Book not found',
+        });
+      }
+
+      res.json({
         success: true,
         message: 'Book deleted successfully',
-        data: deletedBook[0]
-    });
+        data: book,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+
+module.exports = { BookController };
